@@ -1,0 +1,224 @@
+﻿name: Build macOS Python Extension
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version'
+        required: true
+        default: '3.11'
+        type: choice
+        options:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install pybind11
+
+      - name: Modify code for macOS
+        run: |
+          echo "Modifying kmboxNet.h for macOS..."
+          
+          cat > kmboxNet_macos.h << 'EOF'
+          #ifdef _WIN32
+              #include <Winsock2.h>
+              #pragma comment(lib, "ws2_32.lib")
+              typedef int socklen_t;
+          #else
+              #include <sys/socket.h>
+              #include <netinet/in.h>
+              #include <arpa/inet.h>
+              #include <unistd.h>
+              #include <netdb.h>
+              #define SOCKET int
+              #define INVALID_SOCKET -1
+              #define SOCKET_ERROR -1
+              #define closesocket close
+          #endif
+          EOF
+          
+          sed -i.bak '2d' kmboxNet.h
+          sed -i.bak '2r kmboxNet_macos.h' kmboxNet.h
+          rm kmboxNet_macos.h kmboxNet.h.bak
+          
+          echo "Removing Windows-specific pragma from kmNetModule.cpp..."
+          sed -i.bak '/#pragma comment(lib, "ws2_32.lib")/d' kmNetModule.cpp
+          rm kmNetModule.cpp.bak
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build
+          cd build
+          
+          PYTHON_VERSION=
+          PYTHON_EXEC=
+          PYTHON_LIB=/lib/libpython.dylib
+          PYTHON_INC=/include/python
+          
+          echo "Python version: "
+          echo "Python executable: "
+          echo "Python library: "
+          echo "Python include: "
+          
+          cmake .. -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPYTHON_EXECUTABLE= \
+            -DPYTHON_LIBRARY= \
+            -DPYTHON_INCLUDE_DIR=
+
+      - name: Build
+        run: |
+          cd build
+          make -j
+
+      - name: Find and rename output
+        id: find_output
+        run: |
+          cd build
+          OUTPUT_FILE=
+          
+          if [ -z "" ]; then
+            echo "Error: No .so file found"
+            exit 1
+          fi
+          
+          echo "Found output: "
+          
+          PYTHON_VERSION=
+          NEW_NAME="kmNet.cpython-darwin.so"
+          
+          cp "" ""
+          echo "output_file=" >> 
+          echo "output_path=build/" >> 
+
+      - name: Test import
+        run: |
+          cd build
+          python3 -c "import kmNet; print('Import successful!')"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmNet-macos-py${{ matrix.python-version }}
+          path: ${{ steps.find_output.outputs.output_path }}
+          retention-days: 30
+
+      - name: Create Release Package
+        if: matrix.python-version == '3.11'
+        run: |
+          cd build
+          PYTHON_VERSION=
+          NEW_NAME="kmNet.cpython-darwin.so"
+          
+          mkdir -p package
+          cp "" package/
+          cp ../demo.py package/ 2>/dev/null || true
+          
+          cat > package/README.md << 'EOF'
+          # kmNet macOS Python Extension
+          
+          ## Installation
+          
+          1. Copy kmNet.cpython311-darwin.so to your Python project directory
+          2. Import in Python: import kmNet
+          
+          ## Usage
+          
+          `python
+          import kmNet
+          kmNet.init('192.168.2.188', '8320', '24875054')
+          kmNet.move(100, 100)
+          `
+          
+          ## Requirements
+          
+          - Python 3.11
+          - macOS
+          EOF
+          
+          tar -czf kmNet-macos-py.tar.gz package/
+
+      - name: Upload Release Package
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmNet-macos-package
+          path: build/kmNet-macos-py3.11.tar.gz
+          retention-days: 90
+
+  build-all-versions:
+    runs-on: macos-latest
+    needs: build-macos
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create universal package
+        run: |
+          mkdir -p universal-package
+          
+          for artifact in artifacts/kmNet-macos-py*/*.so; do
+            if [ -f "" ]; then
+              cp "" universal-package/
+            fi
+          done
+          
+          cat > universal-package/README.md << 'EOF'
+          # kmNet macOS Python Extension - Multi-Version
+          
+          ## Supported Python Versions
+          - Python 3.9
+          - Python 3.10
+          - Python 3.11
+          - Python 3.12
+          
+          ## Installation
+          
+          Choose the .so file matching your Python version and copy to your project directory.
+          
+          ## Usage
+          
+          `python
+          import kmNet
+          kmNet.init('192.168.2.188', '8320', '24875054')
+          `
+          EOF
+          
+          tar -czf kmNet-macos-all-versions.tar.gz universal-package/
+
+      - name: Upload universal package
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmNet-macos-universal
+          path: kmNet-macos-all-versions.tar.gz
+          retention-days: 90
