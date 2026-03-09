@@ -1,0 +1,52 @@
+name: Build Mac Python Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pybind11 cmake
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DPYTHON_EXECUTABLE=$(which python) \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release -j$(sysctl -n hw.logicalcpu)
+
+      - name: Show build result
+        run: |
+          find build -name "*.so"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-so-${{ matrix.python-version }}
+          path: |
+            build/**/*.so
