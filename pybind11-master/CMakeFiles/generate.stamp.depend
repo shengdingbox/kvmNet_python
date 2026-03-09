@@ -1,0 +1,20 @@
+# CMake generation dependency list for this directory.
+D:/Program Files/CMake/share/cmake-3.27/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/CMakeDependentOption.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/CMakePackageConfigHelpers.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/CMakeParseArguments.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/CheckCXXCompilerFlag.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/CheckCXXSourceCompiles.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/FindPackageMessage.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/FindPythonInterp.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/GNUInstallDirs.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/Internal/CheckCompilerFlag.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/Internal/CheckFlagCommonConfig.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake
+D:/Program Files/CMake/share/cmake-3.27/Modules/WriteBasicConfigVersionFile.cmake
+E:/opencv/kvmDemo/kvmNet_python/pybind11-master/CMakeLists.txt
+E:/opencv/kvmDemo/kvmNet_python/pybind11-master/tools/FindPythonLibsNew.cmake
+E:/opencv/kvmDemo/kvmNet_python/pybind11-master/tools/JoinPaths.cmake
+E:/opencv/kvmDemo/kvmNet_python/pybind11-master/tools/pybind11Common.cmake
+E:/opencv/kvmDemo/kvmNet_python/pybind11-master/tools/pybind11Tools.cmake
