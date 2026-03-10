@@ -1,0 +1,4 @@
+E:/opencv/kvmDemo/kvmNet_python/build/CMakeFiles/kmNet.dir
+E:/opencv/kvmDemo/kvmNet_python/build/CMakeFiles/ALL_BUILD.dir
+E:/opencv/kvmDemo/kvmNet_python/build/CMakeFiles/ZERO_CHECK.dir
+E:/opencv/kvmDemo/kvmNet_python/build/pybind11-master/CMakeFiles/ALL_BUILD.dir
