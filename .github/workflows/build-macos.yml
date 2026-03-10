@@ -76,7 +76,7 @@ jobs:
               #define MAKEWORD(a, b) ((WORD)(((BYTE)(a)) | ((WORD)((BYTE)(b))) << 8))
               #define LOBYTE(w) ((BYTE)(w))
               #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
-              typedef struct { int dummy; } WSADATA;
+              typedef struct { WORD wVersion; WORD wHighVersion; } WSADATA;
           #endif
           EOF
           
