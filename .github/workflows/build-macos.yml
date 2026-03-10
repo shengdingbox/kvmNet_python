@@ -1,4 +1,4 @@
-﻿name: Build macOS Python Extension
+name: Build macOS Python Extension
 
 on:
   push:
@@ -76,46 +76,46 @@ jobs:
           mkdir -p build
           cd build
           
-          PYTHON_VERSION=
-          PYTHON_EXEC=
-          PYTHON_LIB=/lib/libpython.dylib
-          PYTHON_INC=/include/python
+          PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          PYTHON_EXEC=$(which python3)
+          PYTHON_LIB=$(python3-config --prefix)/lib/libpython${PYTHON_VERSION}.dylib
+          PYTHON_INC=$(python3-config --prefix)/include/python${PYTHON_VERSION}
           
-          echo "Python version: "
-          echo "Python executable: "
-          echo "Python library: "
-          echo "Python include: "
+          echo "Python version: $PYTHON_VERSION"
+          echo "Python executable: $PYTHON_EXEC"
+          echo "Python library: $PYTHON_LIB"
+          echo "Python include: $PYTHON_INC"
           
           cmake .. -G "Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
-            -DPYTHON_EXECUTABLE= \
-            -DPYTHON_LIBRARY= \
-            -DPYTHON_INCLUDE_DIR=
+            -DPYTHON_EXECUTABLE=$PYTHON_EXEC \
+            -DPYTHON_LIBRARY=$PYTHON_LIB \
+            -DPYTHON_INCLUDE_DIR=$PYTHON_INC
 
       - name: Build
         run: |
           cd build
-          make -j
+          make -j$(sysctl -n hw.ncpu)
 
       - name: Find and rename output
         id: find_output
         run: |
           cd build
-          OUTPUT_FILE=
+          OUTPUT_FILE=$(find . -name "kmNet*.so" -type f | head -1)
           
-          if [ -z "" ]; then
+          if [ -z "$OUTPUT_FILE" ]; then
             echo "Error: No .so file found"
             exit 1
           fi
           
-          echo "Found output: "
+          echo "Found output: $OUTPUT_FILE"
           
-          PYTHON_VERSION=
-          NEW_NAME="kmNet.cpython-darwin.so"
+          PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          NEW_NAME="kmNet.cpython${PYTHON_VERSION//.}-darwin.so"
           
-          cp "" ""
-          echo "output_file=" >> 
-          echo "output_path=build/" >> 
+          cp "$OUTPUT_FILE" "$NEW_NAME"
+          echo "output_file=$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "output_path=build/$NEW_NAME" >> $GITHUB_OUTPUT
 
       - name: Test import
         run: |
@@ -133,11 +133,11 @@ jobs:
         if: matrix.python-version == '3.11'
         run: |
           cd build
-          PYTHON_VERSION=
-          NEW_NAME="kmNet.cpython-darwin.so"
+          PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+          NEW_NAME="kmNet.cpython${PYTHON_VERSION//.}-darwin.so"
           
           mkdir -p package
-          cp "" package/
+          cp "$NEW_NAME" package/
           cp ../demo.py package/ 2>/dev/null || true
           
           cat > package/README.md << 'EOF'
@@ -145,16 +145,16 @@ jobs:
           
           ## Installation
           
-          1. Copy kmNet.cpython311-darwin.so to your Python project directory
-          2. Import in Python: import kmNet
+          1. Copy `kmNet.cpython311-darwin.so` to your Python project directory
+          2. Import in Python: `import kmNet`
           
           ## Usage
           
-          `python
+          ```python
           import kmNet
           kmNet.init('192.168.2.188', '8320', '24875054')
           kmNet.move(100, 100)
-          `
+          ```
           
           ## Requirements
           
@@ -162,7 +162,7 @@ jobs:
           - macOS
           EOF
           
-          tar -czf kmNet-macos-py.tar.gz package/
+          tar -czf kmNet-macos-py${PYTHON_VERSION}.tar.gz package/
 
       - name: Upload Release Package
         if: matrix.python-version == '3.11'
@@ -188,8 +188,8 @@ jobs:
           mkdir -p universal-package
           
           for artifact in artifacts/kmNet-macos-py*/*.so; do
-            if [ -f "" ]; then
-              cp "" universal-package/
+            if [ -f "$artifact" ]; then
+              cp "$artifact" universal-package/
             fi
           done
           
@@ -208,10 +208,10 @@ jobs:
           
           ## Usage
           
-          `python
+          ```python
           import kmNet
           kmNet.init('192.168.2.188', '8320', '24875054')
-          `
+          ```
           EOF
           
           tar -czf kmNet-macos-all-versions.tar.gz universal-package/
