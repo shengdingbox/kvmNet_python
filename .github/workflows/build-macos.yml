@@ -57,6 +57,7 @@ jobs:
               #include <unistd.h>
               #include <netdb.h>
               #include <cstring>
+              #include <cctype>
               #define SOCKET int
               #define INVALID_SOCKET -1
               #define SOCKET_ERROR -1
@@ -75,6 +76,7 @@ jobs:
               #define MAKEWORD(a, b) ((WORD)(((BYTE)(a)) | ((WORD)((BYTE)(b))) << 8))
               #define LOBYTE(w) ((BYTE)(w))
               #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
+              typedef struct { int dummy; } WSADATA;
           #endif
           EOF
           
@@ -90,6 +92,10 @@ jobs:
           
           echo "Fixing recvfrom calls in kmboxNet.cpp..."
           LC_ALL=C sed -i '' 's/int clen = sizeof/socklen_t clen = sizeof/g' kmboxNet.cpp
+          LC_ALL=C sed -i '' 's/int nSize = sizeof/socklen_t nSize = sizeof/g' kmboxNet.cpp
+          
+          echo "Fixing sin_addr.S_un.S_addr for macOS..."
+          LC_ALL=C sed -i '' 's/addrSrv\.sin_addr\.S_un\.S_addr/addrSrv.sin_addr.s_addr/g' kmboxNet.cpp
           
           echo "Removing Windows-specific pragma from kmNetModule.cpp..."
           LC_ALL=C sed -i '' '/#pragma comment(lib, "ws2_32.lib")/d' kmNetModule.cpp
