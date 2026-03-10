@@ -63,12 +63,12 @@ jobs:
           #endif
           EOF
           
-          sed -i '' '2d' kmboxNet.h
-          sed -i '' '2r kmboxNet_macos.h' kmboxNet.h
+          LC_ALL=C sed -i '' '2d' kmboxNet.h
+          LC_ALL=C sed -i '' '2r kmboxNet_macos.h' kmboxNet.h
           rm kmboxNet_macos.h
           
           echo "Removing Windows-specific pragma from kmNetModule.cpp..."
-          sed -i '' '/#pragma comment(lib, "ws2_32.lib")/d' kmNetModule.cpp
+          LC_ALL=C sed -i '' '/#pragma comment(lib, "ws2_32.lib")/d' kmNetModule.cpp
 
       - name: Configure CMake
         run: |
